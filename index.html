@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Klienta — Generatory Prądu</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f5f9ff 0%, #f0f5ff 100%);
+      color: #2c3e50;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e5a96 0%, #2874b6 100%);
+      color: #fff;
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 4px 20px rgba(30, 90, 150, 0.2);
+    }
+
+    header svg { flex-shrink: 0; opacity: 0.95; }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-top: 3px;
+    }
+
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e8eef5;
+      display: flex;
+      padding: 0 48px;
+      gap: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 18px 32px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #6b8bb3;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-bottom: -1px;
+    }
+
+    nav button:hover { 
+      color: #2874b6;
+      background: #f8fbff;
+    }
+
+    nav button.active {
+      color: #1e5a96;
+      border-bottom-color: #2874b6;
+      background: #f8fbff;
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 28px;
+    }
+
+    .tab { display: none; }
+    .tab.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Materiały ── */
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .section-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #1e5a96;
+      letter-spacing: -0.01em;
+    }
+
+    .section-header-rich {
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+    .section-header-rich h2 {
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      color: #14406b;
+      margin-bottom: 4px;
+    }
+    .section-subtitle {
+      font-size: 0.9rem;
+      color: #6a8aa8;
+      font-weight: 500;
+    }
+    .section-meta { display: flex; align-items: center; gap: 10px; }
+
+    .badge {
+      background: linear-gradient(135deg, #dde8f5 0%, #e8f0f9 100%);
+      color: #1e5a96;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(30, 90, 150, 0.08);
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(30, 90, 150, 0.08), 0 0 1px rgba(30, 90, 150, 0.05);
+      overflow: hidden;
+      border: 1px solid #f0f5ff;
+    }
+    .card-clean {
+      border-radius: 14px;
+      border: 1px solid #e6eef9;
+      box-shadow: 0 1px 2px rgba(20, 64, 107, 0.04), 0 8px 32px rgba(20, 64, 107, 0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+      color: #fff;
+    }
+
+    thead th {
+      padding: 14px 12px;
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #eef3f9;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { 
+      background: #f8fbff;
+    }
+
+    tbody td {
+      padding: 13px 12px;
+      font-size: 0.87rem;
+    }
+
+    .td-name { font-weight: 600; color: #1e5a96; }
+    .td-price { font-weight: 700; color: #2874b6; }
+
+    tfoot tr {
+      background: linear-gradient(135deg, #f5f9ff 0%, #f0f5ff 100%);
+      border-top: 2px solid #d8e5f2;
+    }
+
+    tfoot td {
+      padding: 14px 12px;
+      font-weight: 700;
+      color: #1e5a96;
+      font-size: 0.87rem;
+    }
+
+    .airtable-note {
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: #7a8fa6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0b429, #f5c844);
+      display: inline-block;
+      box-shadow: 0 2px 4px rgba(240, 180, 41, 0.2);
+    }
+
+    /* ── Formularz ── */
+
+    .form-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(30, 90, 150, 0.08), 0 0 1px rgba(30, 90, 150, 0.05);
+      padding: 40px 44px;
+      max-width: 640px;
+      border: 1px solid #f0f5ff;
+    }
+
+    .form-card h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #1e5a96;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .form-card p {
+      font-size: 0.9rem;
+      color: #7a8fa6;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.87rem;
+      font-weight: 600;
+      color: #3a5a7a;
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1.5px solid #d8e5f2;
+      border-radius: 8px;
+      font-size: 0.93rem;
+      color: #2c3e50;
+      background: #ffffff;
+      transition: all 0.25s ease;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #2874b6;
+      box-shadow: 0 0 0 4px rgba(40, 116, 182, 0.12), 0 0 0 1px rgba(40, 116, 182, 0.04);
+      background: #ffffff;
+    }
+
+    textarea { 
+      resize: vertical; 
+      min-height: 120px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+      color: #fff;
+      border: none;
+      padding: 13px 34px;
+      border-radius: 8px;
+      font-size: 0.96rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 12px rgba(40, 116, 182, 0.25);
+    }
+
+    .btn:hover { 
+      opacity: 0.92;
+      box-shadow: 0 6px 16px rgba(40, 116, 182, 0.3);
+    }
+    .btn:active { transform: scale(0.98); }
+
+    /* ── Phone input z kierunkowym ── */
+
+    .phone-input {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid #d8e5f2;
+      border-radius: 8px;
+      background: #ffffff;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      overflow: visible;
+    }
+
+    .phone-input:focus-within {
+      border-color: #2874b6;
+      box-shadow: 0 0 0 4px rgba(40, 116, 182, 0.12);
+    }
+
+    .phone-input input[type="tel"] {
+      flex: 1;
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent;
+      border-radius: 0 8px 8px 0;
+      padding-left: 12px;
+    }
+
+    .phone-input input[type="tel"]:focus { box-shadow: none; }
+
+    .phone-prefix-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 12px 0 14px;
+      background: #f5f9ff;
+      border: none;
+      border-right: 1.5px solid #e8eef5;
+      cursor: pointer;
+      font-size: 0.93rem;
+      font-weight: 600;
+      color: #1e5a96;
+      border-radius: 8px 0 0 8px;
+      transition: background 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .phone-prefix-btn:hover { background: #eaf1fb; }
+    .phone-prefix-btn .flag { font-size: 1.15rem; line-height: 1; }
+    .phone-prefix-btn .chevron { color: #7a8fa6; transition: transform 0.2s ease; }
+    .phone-prefix-btn.open .chevron { transform: rotate(180deg); }
+
+    .prefix-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      width: 320px;
+      max-height: 320px;
+      background: #ffffff;
+      border: 1px solid #e0eaf5;
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(20, 40, 70, 0.15), 0 2px 8px rgba(20, 40, 70, 0.06);
+      display: none;
+      flex-direction: column;
+      z-index: 50;
+      overflow: hidden;
+      animation: prefixIn 0.15s ease;
+    }
+
+    .prefix-panel.show { display: flex; }
+
+    @keyframes prefixIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .prefix-search-wrap {
+      padding: 10px;
+      border-bottom: 1px solid #eef3f9;
+    }
+
+    .prefix-search {
+      width: 100%;
+      padding: 9px 12px !important;
+      border: 1.5px solid #e0eaf5 !important;
+      border-radius: 7px !important;
+      font-size: 0.88rem !important;
+      outline: none;
+    }
+
+    .prefix-search:focus {
+      border-color: #2874b6 !important;
+      box-shadow: 0 0 0 3px rgba(40, 116, 182, 0.1) !important;
+    }
+
+    .prefix-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 4px;
+    }
+
+    .prefix-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #2c3e50;
+      transition: background 0.1s ease;
+    }
+
+    .prefix-item:hover { background: #f5f9ff; }
+    .prefix-item.selected { background: #eaf1fb; color: #1e5a96; font-weight: 600; }
+    .prefix-item .flag { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
+    .prefix-item .name { flex: 1; }
+    .prefix-item .code { color: #7a8fa6; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .prefix-item.selected .code { color: #2874b6; }
+
+    .prefix-empty {
+      padding: 20px;
+      text-align: center;
+      color: #98a8bc;
+      font-size: 0.88rem;
+    }
+
+    .success-msg {
+      display: none;
+      background: #eef9f5;
+      border: 1.5px solid #52c47a;
+      color: #1a6a3a;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .error-msg {
+      display: none;
+      background: #fff5f5;
+      border: 1.5px solid #e05a5a;
+      color: #8a1a1a;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* ── Klient ── */
+
+    .client-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .client-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(30, 90, 150, 0.08), 0 0 1px rgba(30, 90, 150, 0.05);
+      padding: 32px;
+      border: 1px solid #f0f5ff;
+    }
+
+    .client-card.full { grid-column: 1 / -1; }
+
+    .client-card h3 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #2874b6;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid #eef3f9;
+    }
+
+    .client-field {
+      margin-bottom: 16px;
+    }
+
+    .client-field:last-child { margin-bottom: 0; }
+
+    .field-label {
+      font-size: 0.8rem;
+      color: #7a8fa6;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .field-value {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .avatar {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 12px rgba(40, 116, 182, 0.25);
+    }
+
+    /* Klient tab — pełna szerokość, wybija się z max-width głównego mainu */
+    #klient {
+      margin-left: calc(-50vw + 50%);
+      margin-right: calc(-50vw + 50%);
+      padding-left: 28px;
+      padding-right: 28px;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table-scroll::-webkit-scrollbar {
+      height: 10px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #f0f5ff;
+      border-radius: 0 0 12px 12px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #2874b6, #1e5a96);
+      border-radius: 8px;
+      border: 2px solid #f0f5ff;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #1e5a96, #14406b);
+    }
+
+    #contactsTable {
+      width: 100%;
+      min-width: 2280px;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    #contactsTable thead th.form-col,
+    #contactsTable thead th.client-col,
+    #contactsTable thead th.ai-col,
+    #contactsTable thead th.key-col-only,
+    #contactsTable thead th.th-actions {
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+    }
+    /* Spójne min-widths zapobiegają rozjeżdżaniu się kolumn */
+    #contactsTable th, #contactsTable td { vertical-align: top; }
+    .contacts-headers-row th:nth-child(1)  { min-width: 110px; }
+    .contacts-headers-row th:nth-child(2)  { min-width: 170px; }
+    .contacts-headers-row th:nth-child(3)  { min-width: 220px; }
+    .contacts-headers-row th:nth-child(4)  { min-width: 140px; }
+    .contacts-headers-row th:nth-child(5)  { min-width: 120px; }
+    .contacts-headers-row th:nth-child(6)  { min-width: 240px; } /* Zastosowanie */
+    .contacts-headers-row th:nth-child(7)  { min-width: 80px; }
+    .contacts-headers-row th:nth-child(8)  { min-width: 100px; }
+    .contacts-headers-row th:nth-child(9)  { min-width: 90px; }
+    .contacts-headers-row th:nth-child(10) { min-width: 110px; }
+    .contacts-headers-row th:nth-child(11) { min-width: 110px; }
+    .contacts-headers-row th:nth-child(12) { min-width: 120px; }
+    .contacts-headers-row th:nth-child(13) { min-width: 180px; } /* Proponowany */
+    .contacts-headers-row th:nth-child(14) { min-width: 110px; }
+    .contacts-headers-row th:nth-child(15) { min-width: 110px; }
+    .contacts-headers-row th:nth-child(16) { min-width: 240px; } /* Conv ID */
+    .contacts-headers-row th:nth-child(17) { min-width: 80px; }
+
+    .cell-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+      max-width: 260px;
+      color: #2c3e50;
+    }
+
+    .spec-tag {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .spec-tag.diesel    { background: #1a5a9a; color: #fff; }
+    .spec-tag.benzyna   { background: #d4820a; color: #fff; }
+    .spec-tag.gaz       { background: #1a9a6a; color: #fff; }
+    .spec-tag.fazowy1   { background: #f0f5ff; color: #1e5a96; border: 1px solid #d8e5f2; }
+    .spec-tag.fazowy3   { background: #1e5a96; color: #fff; }
+    .spec-tag.mobilny   { background: #eef9f5; color: #1a6a3a; border: 1px solid #b8e0c8; }
+    .spec-tag.stacjon   { background: #f5f9ff; color: #4a6a8a; border: 1px solid #d8e5f2; }
+    .spec-tag.empty     { background: transparent; color: #b8c4d4; font-style: italic; font-weight: 500; padding: 0; }
+
+    /* Specs grid inside modal */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .spec-item {
+      background: #f8fbff;
+      border: 1px solid #eef3f9;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .spec-item .spec-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #7a8fa6;
+      margin-bottom: 4px;
+    }
+
+    .spec-item .spec-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .spec-item .spec-value.muted { color: #b8c4d4; font-weight: 500; font-style: italic; }
+
+    #contactsTable thead tr {
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+      color: #fff;
+    }
+
+    #contactsTable thead th {
+      padding: 14px 14px;
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    #contactsTable tbody tr {
+      border-bottom: 1px solid #eef3f9;
+      transition: background 0.15s ease;
+    }
+
+    #contactsTable tbody tr:last-child { border-bottom: none; }
+    #contactsTable tbody tr:hover { background: #f8fbff; }
+
+    #contactsTable tbody td {
+      padding: 16px 16px;
+      color: #2c3e50;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    #contactsTable thead th {
+      padding: 13px 16px;
+    }
+
+    /* Zakładka "Odpowiedzi klienta" nad pasmem kolumn */
+    #contactsTable thead tr.client-banner-row {
+      background: transparent;
+    }
+    #contactsTable thead th.banner-spacer {
+      background: transparent;
+      padding: 0;
+      border: 0;
+      height: 0;
+      line-height: 0;
+    }
+    #contactsTable thead th.banner-tab {
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      font-size: 0.7rem;
+      padding: 7px 14px 6px;
+      text-align: center;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    #contactsTable thead th.banner-tab-client {
+      background: linear-gradient(135deg, #f0b429, #f5c844);
+      color: #4a2f05;
+      box-shadow: 0 -1px 4px rgba(240, 180, 41, 0.18);
+    }
+    #contactsTable thead th.banner-tab-form {
+      background: linear-gradient(135deg, #e8eff7, #f5f9ff);
+      color: #14406b;
+      box-shadow: 0 -1px 4px rgba(20, 64, 107, 0.10);
+    }
+    #contactsTable thead th.banner-tab-ai {
+      background: linear-gradient(135deg, #6a3eb8, #8a5cd0);
+      color: #ffffff;
+      box-shadow: 0 -1px 4px rgba(106, 62, 184, 0.20);
+    }
+    #contactsTable thead th.banner-tab-key {
+      background: linear-gradient(135deg, #c0392b, #e04a3a);
+      color: #ffffff;
+      box-shadow: 0 -1px 4px rgba(192, 57, 43, 0.20);
+    }
+
+    /* Formularz kontaktowy — chłodne pasmo kolumn */
+    #contactsTable thead th.form-col {
+      box-shadow: inset 0 -3px 0 #14406b;
+    }
+    #contactsTable thead th.form-col-first {
+      box-shadow: inset 3px -3px 0 #14406b;
+    }
+    #contactsTable thead th.form-col-last {
+      box-shadow: inset -3px -3px 0 #14406b;
+    }
+
+    #contactsTable tbody td.form-col {
+      background: #f5f8fd;
+      transition: background 0.15s ease;
+    }
+    #contactsTable tbody tr:hover td.form-col {
+      background: #ebf1fa;
+    }
+    #contactsTable tbody td.form-col-first {
+      box-shadow: inset 3px 0 0 #14406b;
+    }
+    #contactsTable tbody td.form-col-last {
+      box-shadow: inset -3px 0 0 #14406b;
+    }
+    #contactsTable tbody tr:last-child td.form-col {
+      box-shadow: inset 0 -3px 0 #14406b;
+    }
+    #contactsTable tbody tr:last-child td.form-col-first {
+      box-shadow: inset 3px 0 0 #14406b, inset 0 -3px 0 #14406b;
+    }
+    #contactsTable tbody tr:last-child td.form-col-last {
+      box-shadow: inset -3px 0 0 #14406b, inset 0 -3px 0 #14406b;
+    }
+
+    /* Wymagania od klienta — wyróżnione pasmo kolumn */
+    #contactsTable thead th.client-col {
+      box-shadow: inset 0 -3px 0 #f0b429;
+    }
+    #contactsTable thead th.client-col-first {
+      box-shadow: inset 3px -3px 0 #f0b429;
+    }
+    #contactsTable thead th.client-col-last {
+      box-shadow: inset -3px -3px 0 #f0b429;
+    }
+
+    #contactsTable tbody td.client-col {
+      background: #fffaef;
+      transition: background 0.15s ease;
+    }
+    #contactsTable tbody tr:hover td.client-col {
+      background: #fff3d4;
+    }
+    #contactsTable tbody td.client-col-first {
+      box-shadow: inset 3px 0 0 #f0b429;
+    }
+    #contactsTable tbody td.client-col-last {
+      box-shadow: inset -3px 0 0 #f0b429;
+    }
+    #contactsTable tbody tr:last-child td.client-col {
+      box-shadow: inset 0 -3px 0 #f0b429;
+    }
+    #contactsTable tbody tr:last-child td.client-col-first {
+      box-shadow: inset 3px 0 0 #f0b429, inset 0 -3px 0 #f0b429;
+    }
+    #contactsTable tbody tr:last-child td.client-col-last {
+      box-shadow: inset -3px 0 0 #f0b429, inset 0 -3px 0 #f0b429;
+    }
+
+    /* Podsumowanie AI — fioletowe pasmo kolumn */
+    #contactsTable thead th.ai-col {
+      box-shadow: inset 0 -3px 0 #5c2da3;
+    }
+    #contactsTable thead th.ai-col-first {
+      box-shadow: inset 3px -3px 0 #5c2da3;
+    }
+    #contactsTable thead th.ai-col-last {
+      box-shadow: inset -3px -3px 0 #5c2da3;
+    }
+
+    #contactsTable tbody td.ai-col {
+      background: #f7f2fc;
+      transition: background 0.15s ease;
+    }
+    #contactsTable tbody tr:hover td.ai-col {
+      background: #ede2f7;
+    }
+    #contactsTable tbody td.ai-col-first {
+      box-shadow: inset 3px 0 0 #5c2da3;
+    }
+    #contactsTable tbody td.ai-col-last {
+      box-shadow: inset -3px 0 0 #5c2da3;
+    }
+    #contactsTable tbody tr:last-child td.ai-col {
+      box-shadow: inset 0 -3px 0 #5c2da3;
+    }
+    #contactsTable tbody tr:last-child td.ai-col-first {
+      box-shadow: inset 3px 0 0 #5c2da3, inset 0 -3px 0 #5c2da3;
+    }
+    #contactsTable tbody tr:last-child td.ai-col-last {
+      box-shadow: inset -3px 0 0 #5c2da3, inset 0 -3px 0 #5c2da3;
+    }
+
+    /* Klucz — czerwony band (single-column) */
+    #contactsTable thead th.key-col-only {
+      box-shadow: inset 3px 0 0 #8c2516, inset -3px 0 0 #8c2516, inset 0 -3px 0 #8c2516;
+    }
+    #contactsTable tbody td.key-col-only {
+      background: #fdf2f0;
+      transition: background 0.15s ease;
+      box-shadow: inset 3px 0 0 #8c2516, inset -3px 0 0 #8c2516;
+    }
+    #contactsTable tbody tr:hover td.key-col-only {
+      background: #fae3df;
+    }
+    #contactsTable tbody tr:last-child td.key-col-only {
+      box-shadow: inset 3px 0 0 #8c2516, inset -3px 0 0 #8c2516, inset 0 -3px 0 #8c2516;
+    }
+    /* Chip Conversation ID w czerwonym kontekście */
+    .key-col-only .td-conv-id {
+      background: #ffffff;
+      color: #8c2516;
+      border-color: #f0c5c0;
+      box-shadow: 0 1px 2px rgba(140, 37, 22, 0.08);
+    }
+    .key-col-only .td-conv-id.empty {
+      background: transparent;
+      color: #c89090;
+      border: 0;
+    }
+
+    /* Kolumna Akcje */
+    #contactsTable thead th.th-actions {
+      text-align: center;
+      width: 92px;
+    }
+    #contactsTable tbody td.td-actions {
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .delete-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid #e8d5d2;
+      border-radius: 8px;
+      background: #fdf6f5;
+      color: #a02a1d;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .delete-btn:hover {
+      background: #fde9e6;
+      border-color: #d8a59c;
+      color: #8c2516;
+      transform: translateY(-1px);
+    }
+    .delete-btn:active {
+      transform: translateY(0);
+    }
+    .delete-btn.confirming {
+      width: auto;
+      padding: 0 12px;
+      background: linear-gradient(135deg, #c0392b, #e04a3a);
+      border-color: #8c2516;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(192, 57, 43, 0.28);
+    }
+    .delete-btn.confirming::before {
+      content: 'Na pewno?';
+      font-size: 0.74rem;
+      text-transform: uppercase;
+    }
+    .delete-btn.confirming svg {
+      display: none;
+    }
+    .delete-btn.deleting {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    #contactsTable tbody tr.row-removing {
+      opacity: 0;
+      transform: translateX(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .ai-product-chip {
+      display: inline-block;
+      background: #ffffff;
+      color: #5c2da3;
+      border: 1px solid #d8c5f0;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      box-shadow: 0 1px 2px rgba(92, 45, 163, 0.08);
+    }
+
+    .td-msg {
+      max-width: 280px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #5a7a8a;
+    }
+
+    .td-date {
+      white-space: nowrap;
+      color: #7a8fa6;
+      font-size: 0.82rem;
+    }
+
+    .td-conv-id {
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 0.78rem;
+      color: #4a6a8a;
+      background: #f0f5ff;
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid #e0eaf5;
+      display: inline-block;
+      letter-spacing: -0.01em;
+    }
+
+    .td-summary {
+      max-width: 320px;
+      font-size: 0.85rem;
+      color: #3a5a7a;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .td-summary.empty,
+    .td-conv-id.empty {
+      color: #b8c4d4;
+      font-style: italic;
+      background: transparent;
+      border-color: transparent;
+      padding: 0;
+    }
+
+    .transcript-btn {
+      background: #f0f5ff;
+      border: 1px solid #d8e5f2;
+      color: #1e5a96;
+      font-weight: 600;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .transcript-btn:hover {
+      background: #e4eef9;
+      border-color: #2874b6;
+      color: #1e5a96;
+      box-shadow: 0 2px 6px rgba(40, 116, 182, 0.12);
+    }
+
+    .transcript-btn[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #f8fafc;
+    }
+
+    .transcript-btn svg { flex-shrink: 0; }
+
+    /* Wariant fioletowy w paśmie AI */
+    .ai-col .transcript-btn {
+      background: #ffffff;
+      border-color: #d8c5f0;
+      color: #5c2da3;
+    }
+    .ai-col .transcript-btn:hover {
+      background: #f4eefc;
+      border-color: #8a5cd0;
+      color: #5c2da3;
+      box-shadow: 0 2px 6px rgba(106, 62, 184, 0.16);
+    }
+    .ai-col .transcript-btn[disabled] {
+      background: #faf6fe;
+      border-color: #ece0fa;
+      color: #b89dd8;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 40, 70, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 32px 20px;
+      animation: backdropIn 0.2s ease;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    @keyframes backdropIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 760px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(20, 40, 70, 0.35);
+      overflow: hidden;
+      animation: modalIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #1e5a96, #2874b6);
+      color: #fff;
+      padding: 22px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .modal-header .modal-sub {
+      font-size: 0.82rem;
+      opacity: 0.85;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover { background: rgba(255, 255, 255, 0.28); }
+
+    .modal-body {
+      padding: 24px 28px 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-section + .modal-section {
+      margin-top: 22px;
+      padding-top: 22px;
+      border-top: 1px solid #eef3f9;
+    }
+
+    .modal-section h4 {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #2874b6;
+      margin-bottom: 10px;
+    }
+
+    .summary-block {
+      background: linear-gradient(135deg, #f5f9ff 0%, #f0f5ff 100%);
+      border-left: 3px solid #2874b6;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      color: #2c3e50;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .transcript-block {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #2c3e50;
+      white-space: pre-wrap;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .transcript-block .speaker {
+      font-weight: 700;
+      color: #1e5a96;
+      display: inline-block;
+      min-width: 80px;
+    }
+
+    .transcript-block .speaker.client { color: #c0392b; }
+
+    .turn {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      align-items: start;
+    }
+
+    .turn.agent { background: #f5f9ff; border-left: 3px solid #2874b6; }
+    .turn.user  { background: #fef6f5; border-left: 3px solid #c0392b; }
+
+    .turn .meta {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .turn.agent .meta { color: #1e5a96; }
+    .turn.user  .meta { color: #a83a2c; }
+
+    .turn .meta .time {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #98a8bc;
+      letter-spacing: 0;
+      text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .turn .text {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #2c3e50;
+      word-break: break-word;
+    }
+
+    .turn .text.tool {
+      font-size: 0.78rem;
+      color: #7a8fa6;
+      font-style: italic;
+    }
+
+    @media (max-width: 680px) {
+      nav { padding: 0 18px; }
+      nav button { padding: 16px 18px; font-size: 0.85rem; }
+      main { margin: 24px auto; padding: 0 14px; }
+      .client-grid { grid-template-columns: 1fr; }
+      .client-card.full { grid-column: 1; }
+      header { padding: 18px 22px; }
+      .form-card { padding: 28px 24px; }
+      thead th, tbody td { padding: 12px 10px; }
+      #klient { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="20" r="20" fill="rgba(255,255,255,0.15)"/>
+    <path d="M20 8 L20 15 M20 25 L20 32 M8 20 L15 20 M25 20 L32 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="20" cy="20" r="5" fill="white"/>
+    <path d="M14 14 L17 17 M23 23 L26 26 M26 14 L23 17 M17 23 L14 26" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <div>
+    <h1>Panel Klienta</h1>
+    <p>Generatory Prądu — Zarządzanie projektem</p>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('materialy', this)">Zestawienie materiałów</button>
+  <button onclick="showTab('kontakt', this)">Formularz kontaktowy</button>
+  <button onclick="showTab('klient', this)">Informacje o kliencie</button>
+</nav>
+
+<main>
+
+  <!-- ── TAB 1: Materiały ── -->
+  <div id="materialy" class="tab active">
+    <div class="section-header">
+      <h2>Zestawienie generatorów prądu</h2>
+      <span class="badge" id="materialBadge">Ładowanie...</span>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Model</th>
+            <th>Moc</th>
+            <th>Silnik</th>
+            <th>Paliwo</th>
+            <th>Fazy</th>
+            <th>Zbiornik</th>
+            <th>Hałas</th>
+            <th>Ilość</th>
+            <th>Cena jedn.</th>
+            <th>Wartość</th>
+          </tr>
+        </thead>
+        <tbody id="materialsBody">
+          <tr><td colspan="11" style="text-align:center;padding:30px;color:#7a9ab8;">Ładowanie danych z Airtable...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="10" style="text-align:right;">Łączna wartość:</td>
+            <td id="totalValue">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="airtable-note">
+      <span class="dot"></span>
+      Dane pobierane z Airtable — skonfiguruj klucz API w pliku <code>config.js</code>
+    </p>
+  </div>
+
+  <!-- ── TAB 2: Formularz ── -->
+  <div id="kontakt" class="tab">
+    <div class="form-card">
+      <h2>Formularz kontaktowy</h2>
+      <p>Wiadomość zostanie zapisana bezpośrednio w Airtable.</p>
+
+      <form id="contactForm" onsubmit="submitForm(event)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label for="f_imie">Imię *</label>
+            <input type="text" id="f_imie" placeholder="Jan" required />
+          </div>
+          <div class="form-group">
+            <label for="f_nazwisko">Nazwisko *</label>
+            <input type="text" id="f_nazwisko" placeholder="Kowalski" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f_email">Adres e-mail *</label>
+          <input type="email" id="f_email" placeholder="jan@firma.pl" required />
+        </div>
+        <div class="form-group">
+          <label for="f_telefon">Numer telefonu</label>
+          <div class="phone-input">
+            <button type="button" class="phone-prefix-btn" id="prefixBtn" onclick="togglePrefixPanel(event)" aria-label="Wybierz numer kierunkowy">
+              <span class="flag" id="prefixFlag">🇵🇱</span>
+              <span class="code" id="prefixCode">+48</span>
+              <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <input type="tel" id="f_telefon" placeholder="600 000 000" autocomplete="tel-national" />
+            <div class="prefix-panel" id="prefixPanel" role="listbox">
+              <div class="prefix-search-wrap">
+                <input type="text" class="prefix-search" id="prefixSearch" placeholder="Szukaj kraju..." oninput="filterPrefixes(this.value)" onclick="event.stopPropagation()" />
+              </div>
+              <div class="prefix-list" id="prefixList"></div>
+            </div>
+          </div>
+          <input type="hidden" id="f_prefix" value="+48" />
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Wyślij wiadomość</button>
+      </form>
+
+      <div class="success-msg" id="successMsg">
+        Wiadomość została wysłana i zapisana w Airtable.
+      </div>
+      <div class="error-msg" id="errorMsg">
+        Błąd wysyłania. Sprawdź konfigurację Airtable w <code>config.js</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 3: Klient ── -->
+  <div id="klient" class="tab">
+    <div class="section-header section-header-rich">
+      <div>
+        <h2>Baza klientów</h2>
+        <p class="section-subtitle">Zgłoszenia z formularza i rozmowy z asystentem AI</p>
+      </div>
+      <div class="section-meta">
+        <span class="badge" id="contactsBadge">— rekordów</span>
+      </div>
+    </div>
+    <div class="card card-clean">
+      <div class="table-scroll">
+        <table id="contactsTable">
+          <thead>
+            <tr class="client-banner-row">
+              <th colspan="5" class="banner-tab banner-tab-form">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Formularz kontaktowy
+              </th>
+              <th colspan="7" class="banner-tab banner-tab-client">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Odpowiedzi klienta
+              </th>
+              <th colspan="3" class="banner-tab banner-tab-ai">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M12 3l1.6 6.4L20 11l-6.4 1.6L12 19l-1.6-6.4L4 11l6.4-1.6z"/></svg>
+                Podsumowanie AI
+              </th>
+              <th colspan="1" class="banner-tab banner-tab-key">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><circle cx="7.5" cy="15.5" r="3.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+                Klucz
+              </th>
+              <th colspan="1" class="banner-spacer"></th>
+            </tr>
+            <tr class="contacts-headers-row">
+              <th class="form-col form-col-first">Data</th>
+              <th class="form-col">Imię i nazwisko</th>
+              <th class="form-col">Email</th>
+              <th class="form-col">Telefon</th>
+              <th class="form-col form-col-last">Czy odzwoniony</th>
+              <th class="client-col client-col-first">Zastosowanie</th>
+              <th class="client-col">Moc</th>
+              <th class="client-col">Paliwo</th>
+              <th class="client-col">Zbiornik (L)</th>
+              <th class="client-col">Fazy</th>
+              <th class="client-col">Hałas max (dB)</th>
+              <th class="client-col client-col-last">Mobilność</th>
+              <th class="ai-col ai-col-first">Proponowany produkt</th>
+              <th class="ai-col">Podsumowanie AI</th>
+              <th class="ai-col ai-col-last">Transkrypcja</th>
+              <th class="key-col key-col-only">Conversation ID</th>
+              <th class="th-actions">Akcje</th>
+            </tr>
+          </thead>
+          <tbody id="contactsBody">
+            <tr><td colspan="17" style="text-align:center;padding:20px;color:#7a8fa6;">Ładowanie...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── MODAL: Transkrypcja + Podsumowanie ── -->
+<div class="modal-backdrop" id="transcriptModal" onclick="closeTranscriptOnBackdrop(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalTitle">Rozmowa z klientem</h3>
+        <div class="modal-sub" id="modalConvId">—</div>
+      </div>
+      <button class="modal-close" onclick="closeTranscript()" aria-label="Zamknij">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h4>Wymagania klienta</h4>
+        <div class="specs-grid" id="modalSpecs"></div>
+      </div>
+      <div class="modal-section">
+        <h4>Podsumowanie AI</h4>
+        <div class="summary-block" id="modalSummary">—</div>
+      </div>
+      <div class="modal-section">
+        <h4>Transkrypcja rozmowy</h4>
+        <div class="transcript-block" id="modalTranscript">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIG & LOGIC ── -->
+<script>
+  // =====================================================
+  // KONFIGURACJA — uzupełnij po założeniu bazy Airtable
+  // =====================================================
+  const AIRTABLE_API_KEY = 'YOUR_AIRTABLE_API_KEY_HERE';
+  const AIRTABLE_BASE_ID = 'appGm6BLAiYeUzZVK';
+  const TABLE_MATERIALS   = 'Materialy';
+  const TABLE_CONTACTS    = 'tblY5ousa7ukNeOJD';
+  const TABLE_CLIENT      = 'Klient';
+
+  // =====================================================
+  // MOCK DANYCH (aktywny gdy brak konfiguracji Airtable)
+  // =====================================================
+  const MOCK_MATERIALS = [
+    { Nazwa: 'SDMO J22',              Ilość: 3, Jednostka: 'szt', Cena: 18500, Moc: '22 kVA',  Silnik: 'John Deere',   Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '105 L', Hałas: '68 dB' },
+    { Nazwa: 'SDMO J33',              Ilość: 2, Jednostka: 'szt', Cena: 24900, Moc: '33 kVA',  Silnik: 'John Deere',   Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '105 L', Hałas: '70 dB' },
+    { Nazwa: 'SDMO J66K',             Ilość: 1, Jednostka: 'szt', Cena: 54800, Moc: '66 kVA',  Silnik: 'John Deere',   Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '200 L', Hałas: '74 dB' },
+    { Nazwa: 'SDMO T17HK',            Ilość: 4, Jednostka: 'szt', Cena: 15200, Moc: '17 kVA',  Silnik: 'Kohler',       Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '75 L',  Hałas: '67 dB' },
+    { Nazwa: 'Pramac S12000',         Ilość: 5, Jednostka: 'szt', Cena:  9800, Moc: '12 kVA',  Silnik: 'Yanmar',       Paliwo: 'Diesel',      Fazy: '1-fazowy', Zbiornik: '40 L',  Hałas: '64 dB' },
+    { Nazwa: 'Pramac GX7000',         Ilość: 6, Jednostka: 'szt', Cena:  6400, Moc: '7 kVA',   Silnik: 'Honda GX390',  Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '25 L',  Hałas: '60 dB' },
+    { Nazwa: 'Pramac P6000s',         Ilość: 8, Jednostka: 'szt', Cena:  4900, Moc: '6 kVA',   Silnik: 'Subaru',       Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '15 L',  Hałas: '62 dB' },
+    { Nazwa: 'Pramac E8000',          Ilość: 4, Jednostka: 'szt', Cena:  7200, Moc: '8 kVA',   Silnik: 'Yanmar',       Paliwo: 'Diesel',      Fazy: '1-fazowy', Zbiornik: '22 L',  Hałas: '63 dB' },
+    { Nazwa: 'Kohler 20REOZJF',       Ilość: 2, Jednostka: 'szt', Cena: 32000, Moc: '20 kW',   Silnik: 'Kohler',       Paliwo: 'Gaz ziemny',  Fazy: '3-fazowy', Zbiornik: '—',     Hałas: '66 dB' },
+    { Nazwa: 'Kohler 38RCLB',         Ilość: 2, Jednostka: 'szt', Cena: 47500, Moc: '38 kW',   Silnik: 'Kohler',       Paliwo: 'Gaz ziemny',  Fazy: '3-fazowy', Zbiornik: '—',     Hałas: '69 dB' },
+    { Nazwa: 'Cummins C22D5',         Ilość: 4, Jednostka: 'szt', Cena: 27500, Moc: '22 kVA',  Silnik: 'Cummins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '90 L',  Hałas: '72 dB' },
+    { Nazwa: 'Cummins C44D6',         Ilość: 2, Jednostka: 'szt', Cena: 42000, Moc: '44 kVA',  Silnik: 'Cummins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '145 L', Hałas: '74 dB' },
+    { Nazwa: 'Cummins C110D5',        Ilość: 1, Jednostka: 'szt', Cena: 89000, Moc: '110 kVA', Silnik: 'Cummins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '310 L', Hałas: '77 dB' },
+    { Nazwa: 'Honda EU70is',          Ilość: 6, Jednostka: 'szt', Cena: 14200, Moc: '7 kVA',   Silnik: 'Honda GX390',  Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '25 L',  Hałas: '58 dB' },
+    { Nazwa: 'Honda EU22i',           Ilość: 10,Jednostka: 'szt', Cena:  5800, Moc: '2.2 kVA', Silnik: 'Honda GX100',  Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '3.6 L', Hałas: '53 dB' },
+    { Nazwa: 'Caterpillar DE55E0',    Ilość: 1, Jednostka: 'szt', Cena: 68000, Moc: '55 kVA',  Silnik: 'CAT C2.2',     Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '190 L', Hałas: '75 dB' },
+    { Nazwa: 'Caterpillar DE100E0',   Ilość: 1, Jednostka: 'szt', Cena:115000, Moc: '100 kVA', Silnik: 'CAT C4.4',     Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '340 L', Hałas: '78 dB' },
+    { Nazwa: 'Caterpillar DE165E0',   Ilość: 1, Jednostka: 'szt', Cena:168000, Moc: '165 kVA', Silnik: 'CAT C7.1',     Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '500 L', Hałas: '80 dB' },
+    { Nazwa: 'Generac XD5000E',       Ilość: 4, Jednostka: 'szt', Cena:  8900, Moc: '5 kVA',   Silnik: 'Generac OHVI', Paliwo: 'Diesel',      Fazy: '1-fazowy', Zbiornik: '12 L',  Hałas: '61 dB' },
+    { Nazwa: 'Generac GP8000E',       Ilość: 3, Jednostka: 'szt', Cena:  7100, Moc: '8 kVA',   Silnik: 'Generac OHV',  Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '7.9 L', Hałas: '65 dB' },
+    { Nazwa: 'Briggs & Stratton 30675',Ilość: 5,Jednostka: 'szt', Cena:  5500, Moc: '8 kVA',   Silnik: 'B&S 420cc',    Paliwo: 'Benzyna',     Fazy: '1-fazowy', Zbiornik: '6.5 L', Hałas: '63 dB' },
+    { Nazwa: 'Perkins 403D-15G',      Ilość: 3, Jednostka: 'szt', Cena: 22000, Moc: '15 kVA',  Silnik: 'Perkins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '60 L',  Hałas: '69 dB' },
+    { Nazwa: 'Perkins 404D-22G',      Ilość: 2, Jednostka: 'szt', Cena: 31000, Moc: '30 kVA',  Silnik: 'Perkins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '100 L', Hałas: '71 dB' },
+    { Nazwa: 'Volvo TAD532GE',        Ilość: 1, Jednostka: 'szt', Cena: 98000, Moc: '150 kVA', Silnik: 'Volvo',        Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '420 L', Hałas: '79 dB' },
+    { Nazwa: 'MTU 12V2000 G65',       Ilość: 1, Jednostka: 'szt', Cena:245000, Moc: '700 kVA', Silnik: 'MTU',          Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '1200 L',Hałas: '84 dB' },
+    { Nazwa: 'Himoinsa HYW-20 T5',    Ilość: 2, Jednostka: 'szt', Cena: 19800, Moc: '20 kVA',  Silnik: 'Yanmar',       Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '80 L',  Hałas: '67 dB' },
+    { Nazwa: 'Himoinsa HFW-45 T5',    Ilość: 2, Jednostka: 'szt', Cena: 38500, Moc: '45 kVA',  Silnik: 'FPT',          Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '150 L', Hałas: '73 dB' },
+    { Nazwa: 'Teksan TJ55PE5A',       Ilość: 2, Jednostka: 'szt', Cena: 44000, Moc: '55 kVA',  Silnik: 'Perkins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '170 L', Hałas: '74 dB' },
+    { Nazwa: 'FG Wilson P22-6',       Ilość: 3, Jednostka: 'szt', Cena: 21500, Moc: '22 kVA',  Silnik: 'Perkins',      Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '75 L',  Hałas: '68 dB' },
+    { Nazwa: 'Atlas Copco QIS 30',    Ilość: 2, Jednostka: 'szt', Cena: 36000, Moc: '30 kVA',  Silnik: 'Kubota',       Paliwo: 'Diesel',      Fazy: '3-fazowy', Zbiornik: '110 L', Hałas: '65 dB' },
+  ];
+
+  const MOCK_CLIENT = {
+    Imię: 'Jan',
+    Nazwisko: 'Kowalski',
+    Telefon: '+48 600 000 000',
+    Email: 'jan.kowalski@firma.pl',
+  };
+
+  const MOCK_CONTACTS = [
+    {
+      _airtableId: 'mock_1',
+      Imię: 'Jan', Nazwisko: 'Kowalski',
+      Email: 'jan@firma.pl', Telefon: '+48 600 000 000',
+      'Czy odzwoniony': true, Zainteresowany: 'SDMO J22',
+      Data: '2026-04-29T13:09:00.000Z',
+      zastosowanie: 'Plac budowy', moc: '22 kVA', paliwo: 'Diesel',
+      zniornik_litry: 105, fazy: '3-fazowy', halas_max_db: 70, mobilnosc: 'Mobilny',
+      conversation_id: 'conv_01HX7M3KQF8ZAB',
+      'podsumowanie ai': 'Klient prowadzi małą firmę budowlaną pod Krakowem, potrzebuje generatora 20–25 kVA do zasilania placu budowy. Decyzja w ciągu 2 tygodni, budżet do 22 tys. zł netto. Preferuje Diesel, marka SDMO znana z poprzedniej współpracy. Prosi o ofertę z dostawą i serwisem 24-miesięcznym.',
+      transkrypcja: 'Konsultant: Dzień dobry, tu Marek z N3O System, dzwonię w sprawie zapytania o generator prądu.\nKlient: Tak, dzień dobry. Tak, czekałem na telefon.\nKonsultant: Świetnie. Jakiej mocy generator Pan potrzebuje?\nKlient: No, mamy plac budowy, dwa rusztowania, betoniarka, kompresor — myślę że około 20 kVA wystarczy.\nKonsultant: Rozumiem. Diesel czy benzyna?\nKlient: Diesel zdecydowanie, wcześniej mieliśmy SDMO i byliśmy bardzo zadowoleni.\nKonsultant: Mamy w ofercie SDMO J22, 22 kVA, John Deere — mieści się w budżecie?\nKlient: A jaka cena?\nKonsultant: 18 500 netto, dostawa w cenie.\nKlient: Brzmi rozsądnie. Mogę dostać ofertę na maila? Decyzję podejmiemy w ciągu dwóch tygodni.\nKonsultant: Oczywiście, wysyłam dziś. Czy potrzebuje Pan też serwis pogwarancyjny?\nKlient: Tak, 24 miesiące koniecznie.'
+    },
+    {
+      _airtableId: 'mock_2',
+      Imię: 'Anna', Nazwisko: 'Nowak',
+      Email: 'a.nowak@hotelpodlasem.pl', Telefon: '+48 500 111 222',
+      'Czy odzwoniony': false, Zainteresowany: 'Cummins C44D6',
+      Data: '2026-04-30T10:42:00.000Z',
+      zastosowanie: 'Hotel — zasilanie awaryjne', moc: '44 kVA', paliwo: 'Diesel',
+      zniornik_litry: 145, fazy: '3-fazowy', halas_max_db: 65, mobilnosc: 'Stacjonarny',
+      conversation_id: 'conv_01HX8B2LRT5KCD',
+      'podsumowanie ai': 'Hotel 60-pokojowy w Bieszczadach, częste przerwy w dostawie prądu zimą. Szuka generatora awaryjnego z automatyką SZR. Zapytanie o Cummins 40–50 kVA. Klientka prosi o kontakt po 5 maja — w tym tygodniu jest na konferencji. Wysokie zainteresowanie, szansa zamknięcia ~70%.',
+      transkrypcja: 'Konsultant: Pani Anno, dzień dobry, kontaktuję się w sprawie zapytania o agregat prądotwórczy.\nKlient: Dzień dobry, tak, wysłałam zapytanie wczoraj wieczorem.\nKonsultant: Widzę. Hotel 60 pokoi, automatyka SZR — tak?\nKlient: Tak, mieliśmy w styczniu 14-godzinną przerwę w prądzie i straciliśmy wszystkie rezerwacje weekendowe. Już więcej tego nie chcę.\nKonsultant: Rozumiem. Polecam Cummins C44D6, 44 kVA, w pełni automatyczny.\nKlient: Świetnie, ale teraz jestem na konferencji w Warszawie do piątku. Może oddzwoni Pan w przyszły poniedziałek, 5 maja?\nKonsultant: Oczywiście, zapisuję przypomnienie. Wysyłam tymczasem specyfikację mailem.\nKlient: Dziękuję, do usłyszenia.'
+    },
+    {
+      _airtableId: 'mock_3',
+      Imię: 'Piotr', Nazwisko: 'Wiśniewski',
+      Email: 'piotr.w@logistyka-pw.pl', Telefon: '+48 510 333 444',
+      'Czy odzwoniony': true, Zainteresowany: 'Caterpillar DE100E0',
+      Data: '2026-05-02T16:20:00.000Z',
+      zastosowanie: 'Centrum logistyczne — mroźnia', moc: '100 kVA', paliwo: 'Diesel',
+      zniornik_litry: 340, fazy: '3-fazowy', halas_max_db: 78, mobilnosc: 'Stacjonarny',
+      conversation_id: 'conv_01HXA9F4JNW2EF',
+      'podsumowanie ai': 'Centrum logistyczne 8 000 m² w Łodzi. Audyt energetyczny wskazał potrzebę zasilania awaryjnego dla mroźni i serwerowni. Klient zdecydowany, ma już budżet zatwierdzony przez zarząd. Zamówienie planowane do końca maja. Bardzo wysoka szansa zamknięcia.',
+      transkrypcja: 'Konsultant: Panie Piotrze, dziękuję za czas. Przeszliśmy specyfikację — DE100E0 spełnia wszystkie wymagania mroźni.\nKlient: Tak, audyt też to potwierdził. Pytanie o termin dostawy?\nKonsultant: 4–6 tygodni od zamówienia.\nKlient: Mieścimy się. Zarząd zatwierdził budżet 130 tysięcy, my chcemy zamknąć temat do końca maja.\nKonsultant: Idealnie. Wyślę wzór umowy jutro rano, możemy podpisać przez DocuSign?\nKlient: Tak, preferuję elektronicznie. Wysyłajcie.\nKonsultant: Świetnie, działa.'
+    },
+  ];
+
+  // =====================================================
+  // NAWIGACJA
+  // =====================================================
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // =====================================================
+  // MATERIAŁY
+  // =====================================================
+  async function loadMaterials() {
+    if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+      renderMaterials(MOCK_MATERIALS);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLE_MATERIALS)}`,
+        { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
+      );
+      const data = await res.json();
+      const rows = data.records.map(r => r.fields);
+      renderMaterials(rows);
+    } catch(e) {
+      renderMaterials(MOCK_MATERIALS);
+    }
+  }
+
+  function paliwoTag(p) {
+    const colors = { 'Diesel': '#1a5a9a', 'Benzyna': '#d4820a', 'Gaz ziemny': '#1a9a6a' };
+    const c = colors[p] || '#5a7a9a';
+    return `<span style="background:${c};color:#fff;font-size:0.75rem;font-weight:700;padding:2px 9px;border-radius:12px;">${p || '—'}</span>`;
+  }
+
+  function renderMaterials(rows) {
+    const tbody = document.getElementById('materialsBody');
+    let total = 0;
+    tbody.innerHTML = rows.map((r, i) => {
+      const wartosc = r['Wartość'] || 0;
+      total += wartosc;
+      return `<tr>
+        <td style="color:#7a9ab8;font-size:0.85rem;">${i+1}</td>
+        <td class="td-name">${r['Model'] || r['Nazwa'] || '—'}</td>
+        <td><strong>${r['Moc'] || '—'}</strong></td>
+        <td style="font-size:0.88rem;color:#4a6a8a;">${r['Silnik'] || '—'}</td>
+        <td>${paliwoTag(r['Paliwo'])}</td>
+        <td style="font-size:0.88rem;">${r['Fazy'] || '—'}</td>
+        <td style="font-size:0.88rem;color:#4a6a8a;">${r['Zbiornik'] || '—'}</td>
+        <td style="font-size:0.88rem;color:#4a6a8a;">${r['Hałas'] || '—'}</td>
+        <td>${r['Ilość'] != null ? r['Ilość'] + ' szt' : '—'}</td>
+        <td class="td-price">${r['Cena jedn.'] != null ? formatPLN(r['Cena jedn.']) : '—'}</td>
+        <td class="td-price">${wartosc ? formatPLN(wartosc) : '—'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('totalValue').textContent = formatPLN(total);
+    document.getElementById('materialBadge').textContent = `${rows.length} pozycji`;
+  }
+
+  function formatPLN(n) {
+    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(n);
+  }
+
+  // =====================================================
+  // PHONE PREFIX PICKER
+  // =====================================================
+  const COUNTRY_PREFIXES = [
+    { code: '+48',  flag: '🇵🇱', name: 'Polska' },
+    { code: '+49',  flag: '🇩🇪', name: 'Niemcy' },
+    { code: '+44',  flag: '🇬🇧', name: 'Wielka Brytania' },
+    { code: '+420', flag: '🇨🇿', name: 'Czechy' },
+    { code: '+421', flag: '🇸🇰', name: 'Słowacja' },
+    { code: '+380', flag: '🇺🇦', name: 'Ukraina' },
+    { code: '+370', flag: '🇱🇹', name: 'Litwa' },
+    { code: '+371', flag: '🇱🇻', name: 'Łotwa' },
+    { code: '+372', flag: '🇪🇪', name: 'Estonia' },
+    { code: '+33',  flag: '🇫🇷', name: 'Francja' },
+    { code: '+39',  flag: '🇮🇹', name: 'Włochy' },
+    { code: '+34',  flag: '🇪🇸', name: 'Hiszpania' },
+    { code: '+351', flag: '🇵🇹', name: 'Portugalia' },
+    { code: '+31',  flag: '🇳🇱', name: 'Holandia' },
+    { code: '+32',  flag: '🇧🇪', name: 'Belgia' },
+    { code: '+43',  flag: '🇦🇹', name: 'Austria' },
+    { code: '+41',  flag: '🇨🇭', name: 'Szwajcaria' },
+    { code: '+46',  flag: '🇸🇪', name: 'Szwecja' },
+    { code: '+47',  flag: '🇳🇴', name: 'Norwegia' },
+    { code: '+45',  flag: '🇩🇰', name: 'Dania' },
+    { code: '+358', flag: '🇫🇮', name: 'Finlandia' },
+    { code: '+353', flag: '🇮🇪', name: 'Irlandia' },
+    { code: '+36',  flag: '🇭🇺', name: 'Węgry' },
+    { code: '+40',  flag: '🇷🇴', name: 'Rumunia' },
+    { code: '+359', flag: '🇧🇬', name: 'Bułgaria' },
+    { code: '+30',  flag: '🇬🇷', name: 'Grecja' },
+    { code: '+1',   flag: '🇺🇸', name: 'USA / Kanada' },
+  ];
+
+  let selectedPrefix = COUNTRY_PREFIXES[0];
+
+  function renderPrefixList(filter = '') {
+    const list = document.getElementById('prefixList');
+    const q = filter.trim().toLowerCase();
+    const items = COUNTRY_PREFIXES.filter(c =>
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.code.includes(q.replace(/^\+?/, '+')) ||
+      c.code.replace('+', '').startsWith(q.replace(/^\+/, ''))
+    );
+    if (!items.length) {
+      list.innerHTML = '<div class="prefix-empty">Brak wyników</div>';
+      return;
+    }
+    list.innerHTML = items.map(c => `
+      <div class="prefix-item${c.code === selectedPrefix.code ? ' selected' : ''}" onclick="selectPrefix('${c.code}')" role="option">
+        <span class="flag">${c.flag}</span>
+        <span class="name">${escapeHtml(c.name)}</span>
+        <span class="code">${c.code}</span>
+      </div>
+    `).join('');
+  }
+
+  function togglePrefixPanel(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('prefixPanel');
+    const btn = document.getElementById('prefixBtn');
+    const isOpen = panel.classList.toggle('show');
+    btn.classList.toggle('open', isOpen);
+    if (isOpen) {
+      renderPrefixList();
+      const search = document.getElementById('prefixSearch');
+      search.value = '';
+      setTimeout(() => search.focus(), 30);
+    }
+  }
+
+  function selectPrefix(code) {
+    const c = COUNTRY_PREFIXES.find(x => x.code === code);
+    if (!c) return;
+    selectedPrefix = c;
+    document.getElementById('prefixFlag').textContent = c.flag;
+    document.getElementById('prefixCode').textContent = c.code;
+    document.getElementById('f_prefix').value = c.code;
+    document.getElementById('prefixPanel').classList.remove('show');
+    document.getElementById('prefixBtn').classList.remove('open');
+    document.getElementById('f_telefon').focus();
+  }
+
+  function filterPrefixes(v) { renderPrefixList(v); }
+
+  document.addEventListener('click', e => {
+    const panel = document.getElementById('prefixPanel');
+    if (!panel || !panel.classList.contains('show')) return;
+    if (e.target.closest('#prefixPanel') || e.target.closest('#prefixBtn')) return;
+    panel.classList.remove('show');
+    document.getElementById('prefixBtn').classList.remove('open');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const panel = document.getElementById('prefixPanel');
+      if (panel && panel.classList.contains('show')) {
+        panel.classList.remove('show');
+        document.getElementById('prefixBtn').classList.remove('open');
+      }
+    }
+  });
+
+  // =====================================================
+  // FORMULARZ
+  // =====================================================
+  async function submitForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Wysyłanie...';
+    btn.disabled = true;
+    document.getElementById('successMsg').style.display = 'none';
+    document.getElementById('errorMsg').style.display = 'none';
+
+    const prefix = document.getElementById('f_prefix').value || '';
+    const localPhone = document.getElementById('f_telefon').value.trim();
+    const fullPhone = localPhone ? `${prefix} ${localPhone}`.trim() : '';
+
+    const payload = {
+      records: [{
+        fields: {
+          Imię:     document.getElementById('f_imie').value,
+          Nazwisko: document.getElementById('f_nazwisko').value,
+          Email:    document.getElementById('f_email').value,
+          Telefon:  fullPhone,
+          Data:     new Date().toISOString(),
+        }
+      }]
+    };
+
+    if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+      // Demo: symuluj sukces
+      await new Promise(r => setTimeout(r, 900));
+      document.getElementById('successMsg').style.display = 'block';
+      document.getElementById('contactForm').reset();
+      btn.textContent = 'Wyślij wiadomość';
+      btn.disabled = false;
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLE_CONTACTS)}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (res.ok) {
+        document.getElementById('successMsg').style.display = 'block';
+        document.getElementById('contactForm').reset();
+      } else {
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    } catch {
+      document.getElementById('errorMsg').style.display = 'block';
+    }
+    btn.textContent = 'Wyślij wiadomość';
+    btn.disabled = false;
+  }
+
+  // =====================================================
+  // KLIENT
+  // =====================================================
+  async function loadClient() {
+    if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+      renderClient(MOCK_CLIENT);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLE_CLIENT)}?maxRecords=1`,
+        { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
+      );
+      const data = await res.json();
+      if (data.records && data.records.length > 0) renderClient(data.records[0].fields);
+      else renderClient(MOCK_CLIENT);
+    } catch {
+      renderClient(MOCK_CLIENT);
+    }
+  }
+
+  function renderClient(f) {
+    const imie = f['Imię'] || '';
+    const nazwisko = f['Nazwisko'] || '';
+    const fullName = [imie, nazwisko].filter(Boolean).join(' ') || 'Klient';
+    const initials = [imie[0], nazwisko[0]].filter(Boolean).join('').toUpperCase() || 'K';
+
+    document.getElementById('clientName').textContent  = fullName;
+    document.getElementById('clientPhone').textContent = f['Telefon'] || '—';
+    document.getElementById('clientEmail').textContent = f['Email']   || '—';
+    document.getElementById('clientAvatar').textContent = initials;
+  }
+
+  // =====================================================
+  // KONTAKTY (historia formularza)
+  // =====================================================
+  async function loadContacts() {
+    if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+      renderContacts(MOCK_CONTACTS);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${TABLE_CONTACTS}`,
+        { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
+      );
+      const data = await res.json();
+      const records = (data.records || []).map(r => ({ ...r.fields, _airtableId: r.id }));
+      if (records[0]) {
+        console.log('%c[Airtable] Pola w pierwszym rekordzie:', 'color:#1e5a96;font-weight:700;', Object.keys(records[0]));
+        console.log('[Airtable] Pełny pierwszy rekord:', records[0]);
+        const summaryKeys = Object.keys(records[0]).filter(k => /podsum|summary/i.test(k));
+        const transKeys   = Object.keys(records[0]).filter(k => /transk|transcr/i.test(k));
+        console.log('[Airtable] Kandydaci na podsumowanie:', summaryKeys, summaryKeys.map(k => records[0][k]));
+        console.log('[Airtable] Kandydaci na transkrypcję:', transKeys);
+      }
+      renderContacts(records);
+    } catch (err) {
+      console.warn('[Airtable] Błąd pobierania kontaktów, używam danych mock:', err);
+      renderContacts(MOCK_CONTACTS);
+    }
+  }
+
+  // Tolerancyjne wyszukiwanie pola — trzy strategie:
+  // 1) Dokładne dopasowanie nazwy
+  // 2) Znormalizowane (ignoruje wielkość liter, spacje, podkreślenia, myślniki)
+  // 3) Substring — np. "podsumowanie" znajdzie "Podsumowanie rozmowy AI"
+  function getField(record, ...names) {
+    for (const n of names) {
+      const v = record[n];
+      if (v !== undefined && v !== null && v !== '') return v;
+    }
+    const norm = s => String(s).toLowerCase().replace(/[\s_\-]+/g, '');
+    const keys = Object.keys(record);
+    for (const n of names) {
+      const target = norm(n);
+      const hit = keys.find(k => norm(k) === target);
+      if (hit) {
+        const v = record[hit];
+        if (v !== undefined && v !== null && v !== '') return v;
+      }
+    }
+    for (const n of names) {
+      const target = norm(n);
+      if (target.length < 4) continue;
+      const hit = keys.find(k => {
+        const nk = norm(k);
+        return nk.includes(target) || target.includes(nk);
+      });
+      if (hit) {
+        const v = record[hit];
+        if (v !== undefined && v !== null && v !== '') {
+          console.log(`[getField] dopasowano "${hit}" do "${n}" (substring)`);
+          return v;
+        }
+      }
+    }
+    return '';
+  }
+
+  // Cache rekordów, żeby modal mógł sięgnąć do pełnej transkrypcji bez re-fetchu
+  let CONTACTS_CACHE = [];
+
+  function renderContacts(rows) {
+    CONTACTS_CACHE = rows;
+    const tbody = document.getElementById('contactsBody');
+    const badge = document.getElementById('contactsBadge');
+    if (badge) {
+      const n = rows.length;
+      badge.textContent = n === 1 ? '1 rekord' : (n >= 2 && n <= 4 ? `${n} rekordy` : `${n} rekordów`);
+    }
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="17" style="text-align:center;padding:32px;color:#7a8fa6;">Brak zgłoszeń.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => {
+      const data = r['Data'] ? new Date(r['Data']).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+      const odzwoniony = r['Czy odzwoniony']
+        ? '<span style="color:#1a9a4a;font-weight:700;">✓ Tak</span>'
+        : '<span style="color:#c0392b;font-weight:700;">✗ Nie</span>';
+      const fullName = [r['Imię'], r['Nazwisko']].filter(Boolean).join(' ') || '—';
+
+      const convIdRaw = getField(r, 'conversation_id', 'Conversation ID', 'conversationId');
+      const convId = convIdRaw
+        ? `<span class="td-conv-id">${escapeHtml(convIdRaw)}</span>`
+        : `<span class="td-conv-id empty">—</span>`;
+
+      const summaryRaw = getField(r, 'podsumowanie ai', 'Podsumowanie AI', 'podsumowanie_ai', 'podsumowanie', 'Podsumowanie', 'AI Summary', 'Summary', 'summary');
+      const summaryDisplay = summaryRaw ? extractSummaryText(summaryRaw) : '';
+      const summary = summaryDisplay
+        ? `<button class="transcript-btn" onclick="openTranscript(${i})">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+             Pokaż
+           </button>`
+        : `<button class="transcript-btn" disabled>brak</button>`;
+
+      const transcriptRaw = getField(r, 'transkrypcja', 'Transkrypcja', 'transcript', 'Transcript', 'transcript_text', 'transkrypcja_rozmowy');
+      const transcriptBtn = transcriptRaw
+        ? `<button class="transcript-btn" onclick="openTranscript(${i})">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+             Pokaż
+           </button>`
+        : `<button class="transcript-btn" disabled>brak</button>`;
+
+      const zastosowanie = getField(r, 'zastosowanie', 'Zastosowanie');
+      const moc          = getField(r, 'moc', 'Moc');
+      const paliwo       = getField(r, 'paliwo', 'Paliwo');
+      const zbiornik     = getField(r, 'zniornik_litry', 'zbiornik_litry', 'Zbiornik (L)', 'zbiornik');
+      const fazy         = getField(r, 'fazy', 'Fazy');
+      const halas        = getField(r, 'halas_max_db', 'Hałas max (dB)', 'halas');
+      const mobilnosc    = getField(r, 'mobilnosc', 'Mobilność');
+
+      const proponowanyRaw = getField(r, 'proponowany_produkt', 'Proponowany produkt', 'Zainteresowany');
+      const proponowany = proponowanyRaw
+        ? `<span class="ai-product-chip">${escapeHtml(String(proponowanyRaw))}</span>`
+        : '<span class="spec-tag empty">—</span>';
+
+      const recId = r._airtableId || '';
+      const deleteBtn = recId
+        ? `<button class="delete-btn" onclick="confirmDeleteContact(this, '${escapeAttr(recId)}')" aria-label="Usuń rekord" title="Usuń rekord">
+             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+           </button>`
+        : '<span class="spec-tag empty">—</span>';
+
+      return `<tr>
+        <td class="td-date form-col form-col-first">${data}</td>
+        <td class="td-name form-col">${fullName}</td>
+        <td class="form-col">${r['Email'] || '—'}</td>
+        <td class="form-col">${r['Telefon'] || '—'}</td>
+        <td class="form-col form-col-last">${odzwoniony}</td>
+        <td class="client-col client-col-first">${zastosowanie ? `<div class="cell-clamp">${escapeHtml(zastosowanie)}</div>` : '<span class="spec-tag empty">—</span>'}</td>
+        <td class="client-col">${moc ? `<strong>${escapeHtml(moc)}</strong>` : '<span class="spec-tag empty">—</span>'}</td>
+        <td class="client-col">${paliwoTagRich(paliwo)}</td>
+        <td class="client-col">${zbiornik !== '' ? escapeHtml(String(zbiornik)) + ' L' : '<span class="spec-tag empty">—</span>'}</td>
+        <td class="client-col">${fazyTag(fazy)}</td>
+        <td class="client-col">${halas !== '' ? escapeHtml(String(halas)) + ' dB' : '<span class="spec-tag empty">—</span>'}</td>
+        <td class="client-col client-col-last">${mobilnoscTag(mobilnosc)}</td>
+        <td class="ai-col ai-col-first">${proponowany}</td>
+        <td class="ai-col">${summary}</td>
+        <td class="ai-col ai-col-last">${transcriptBtn}</td>
+        <td class="key-col key-col-only">${convId}</td>
+        <td class="td-actions">${deleteBtn}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function paliwoTagRich(p) {
+    if (!p) return '<span class="spec-tag empty">—</span>';
+    const k = String(p).toLowerCase();
+    let cls = '';
+    if (k.includes('diesel'))  cls = 'diesel';
+    else if (k.includes('benz')) cls = 'benzyna';
+    else if (k.includes('gaz'))  cls = 'gaz';
+    return `<span class="spec-tag ${cls}">${escapeHtml(p)}</span>`;
+  }
+
+  function fazyTag(f) {
+    if (!f) return '<span class="spec-tag empty">—</span>';
+    const cls = String(f).startsWith('3') ? 'fazowy3' : 'fazowy1';
+    return `<span class="spec-tag ${cls}">${escapeHtml(f)}</span>`;
+  }
+
+  function mobilnoscTag(m) {
+    if (!m) return '<span class="spec-tag empty">—</span>';
+    const cls = /mobil/i.test(m) ? 'mobilny' : 'stacjon';
+    return `<span class="spec-tag ${cls}">${escapeHtml(m)}</span>`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // ── Usuwanie kontaktu (Airtable + lokalnie) ──
+  let DELETE_CONFIRM_TIMEOUT = null;
+  let DELETE_CONFIRM_BTN = null;
+
+  function resetDeleteConfirm() {
+    if (DELETE_CONFIRM_BTN) {
+      DELETE_CONFIRM_BTN.classList.remove('confirming');
+      DELETE_CONFIRM_BTN = null;
+    }
+    if (DELETE_CONFIRM_TIMEOUT) {
+      clearTimeout(DELETE_CONFIRM_TIMEOUT);
+      DELETE_CONFIRM_TIMEOUT = null;
+    }
+  }
+
+  function confirmDeleteContact(btn, recordId) {
+    if (DELETE_CONFIRM_BTN === btn) {
+      resetDeleteConfirm();
+      deleteContact(btn, recordId);
+      return;
+    }
+    resetDeleteConfirm();
+    DELETE_CONFIRM_BTN = btn;
+    btn.classList.add('confirming');
+    DELETE_CONFIRM_TIMEOUT = setTimeout(resetDeleteConfirm, 3500);
+  }
+
+  async function deleteContact(btn, recordId) {
+    btn.disabled = true;
+    btn.classList.add('deleting');
+
+    const isMock = String(recordId).startsWith('mock_');
+    const useAirtable = AIRTABLE_API_KEY && AIRTABLE_BASE_ID && !isMock;
+
+    if (useAirtable) {
+      try {
+        const res = await fetch(
+          `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${TABLE_CONTACTS}/${recordId}`,
+          { method: 'DELETE', headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
+        );
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[Airtable] DELETE error:', res.status, errText);
+          btn.disabled = false;
+          btn.classList.remove('deleting');
+          alert('Nie udało się usunąć rekordu z Airtable. Sprawdź konsolę.');
+          return;
+        }
+      } catch (err) {
+        console.error('[Airtable] DELETE exception:', err);
+        btn.disabled = false;
+        btn.classList.remove('deleting');
+        alert('Błąd sieci przy usuwaniu rekordu.');
+        return;
+      }
+    }
+
+    const tr = btn.closest('tr');
+    if (tr) tr.classList.add('row-removing');
+    setTimeout(() => {
+      CONTACTS_CACHE = CONTACTS_CACHE.filter(r => r._airtableId !== recordId);
+      renderContacts(CONTACTS_CACHE);
+    }, 220);
+  }
+
+  // ── Transkrypcja: modal ──
+  function openTranscript(idx) {
+    const r = CONTACTS_CACHE[idx];
+    if (!r) return;
+
+    const fullName = [r['Imię'], r['Nazwisko']].filter(Boolean).join(' ') || 'Klient';
+    const convId   = getField(r, 'conversation_id', 'Conversation ID', 'conversationId') || '—';
+    const summaryRaw = getField(r, 'podsumowanie ai', 'Podsumowanie AI', 'podsumowanie_ai', 'podsumowanie', 'AI Summary', 'Summary');
+    const summary = summaryRaw ? extractSummaryText(summaryRaw) : 'Brak podsumowania.';
+    const raw = getField(r, 'transkrypcja', 'Transkrypcja', 'transcript', 'Transcript', 'transcript_text', 'transkrypcja_rozmowy') || '';
+
+    document.getElementById('modalTitle').textContent = 'Rozmowa z: ' + fullName;
+    document.getElementById('modalConvId').textContent = convId;
+    document.getElementById('modalSummary').textContent = summary;
+    document.getElementById('modalTranscript').innerHTML = raw ? formatTranscript(raw) : 'Brak transkrypcji.';
+    document.getElementById('modalSpecs').innerHTML = renderSpecs(r);
+
+    document.getElementById('transcriptModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function renderSpecs(r) {
+    const zb = getField(r, 'zniornik_litry', 'zbiornik_litry', 'Zbiornik (L)', 'zbiornik');
+    const hl = getField(r, 'halas_max_db', 'Hałas max (dB)', 'halas');
+    const items = [
+      { label: 'Zastosowanie',  value: getField(r, 'zastosowanie', 'Zastosowanie') },
+      { label: 'Moc',           value: getField(r, 'moc', 'Moc') },
+      { label: 'Paliwo',        value: getField(r, 'paliwo', 'Paliwo') },
+      { label: 'Zbiornik',      value: zb !== '' ? zb + ' L' : '' },
+      { label: 'Fazy',          value: getField(r, 'fazy', 'Fazy') },
+      { label: 'Hałas max',     value: hl !== '' ? hl + ' dB' : '' },
+      { label: 'Mobilność',     value: getField(r, 'mobilnosc', 'Mobilność') },
+    ];
+    return items.map(it => `
+      <div class="spec-item">
+        <div class="spec-label">${escapeHtml(it.label)}</div>
+        <div class="spec-value${it.value ? '' : ' muted'}">${it.value ? escapeHtml(String(it.value)) : 'brak'}</div>
+      </div>
+    `).join('');
+  }
+
+  // Wyciąga czytelny tekst z pola "podsumowanie" — może być zwykłym stringiem
+  // albo JSON-em z polem `summary` / `text` / `transcript_summary` (jak z ElevenLabs).
+  function extractSummaryText(raw) {
+    if (typeof raw !== 'string') {
+      if (raw && typeof raw === 'object') {
+        return raw.summary || raw.transcript_summary || raw.text || JSON.stringify(raw);
+      }
+      return String(raw ?? '');
+    }
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const obj = JSON.parse(trimmed);
+        return obj.summary || obj.transcript_summary || obj.text || trimmed;
+      } catch { /* not JSON, fall through */ }
+    }
+    return raw;
+  }
+
+  // Formatuje transkrypcję — obsługuje:
+  // 1) Plain text "Speaker: text\nSpeaker: text" (mock)
+  // 2) JSON z ElevenLabs: [{role, message, time_in_call_secs, tool_calls}, ...]
+  // 3) Comma-separated objects bez nawiasów [...] (jak surowy export ElevenLabs)
+  // 4) Obiekt z polem transcript / messages / turns
+  function formatTranscript(raw) {
+    const turns = parseTranscriptJson(raw);
+    if (!turns) {
+      return escapeHtml(String(raw))
+        .split('\n')
+        .map(line => {
+          const m = line.match(/^([^:]{1,40}):\s*(.*)$/);
+          if (!m) return line;
+          const isClient = /klient|user|customer/i.test(m[1]);
+          return `<span class="speaker${isClient ? ' client' : ''}">${m[1]}:</span> ${m[2]}`;
+        })
+        .join('<br>');
+    }
+    return turns.map(t => {
+      const isClient = /user|client|klient|customer/i.test(t.role);
+      const cls = isClient ? 'user' : 'agent';
+      const label = isClient ? 'Klient' : 'Agent';
+      const time = formatCallTime(t.time);
+      const textCls = t.isTool ? 'text tool' : 'text';
+      return `<div class="turn ${cls}">
+        <div class="meta">${label}<span class="time">${time}</span></div>
+        <div class="${textCls}">${escapeHtml(t.message)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function formatCallTime(secs) {
+    if (typeof secs !== 'number' || !isFinite(secs) || secs < 0) return '';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  // Czyści tagi inline z modelu TTS i artefakty ASR
+  function cleanMessage(s) {
+    if (!s) return '';
+    return String(s)
+      .replace(/\[slow\]|\[fast\]|\[pewnie\]|\[Pewnie\]/gi, '')
+      .replace(/<\|[^|]*\|>/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  function parseTranscriptJson(raw) {
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (!trimmed) return null;
+      if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return null;
+
+      // Próbujemy kilku wariantów JSON.parse — od najczystszego do najbardziej luźnego
+      const variants = [
+        trimmed,
+        '[' + trimmed + ']',
+        '[' + trimmed.replace(/\}\s*\{/g, '},{') + ']',
+        // Escape "gołych" znaków kontrolnych w stringach (czasem psują JSON)
+        '[' + trimmed.replace(/[\u0000-\u001f]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).replace(/\}\s*\{/g, '},{') + ']',
+      ];
+      for (const v of variants) {
+        try {
+          const parsed = JSON.parse(v);
+          const arr = extractTurnsArray(parsed);
+          if (arr) {
+            const mapped = mapTurns(arr);
+            if (mapped) {
+              console.log('[Transkrypcja] sparsowano JSON-em, ' + mapped.length + ' tur');
+              return mapped;
+            }
+          }
+        } catch { /* spróbuj następny wariant */ }
+      }
+
+      // Ostateczny fallback: regex wyciąga pary role + message
+      const viaRegex = extractTurnsViaRegex(trimmed);
+      if (viaRegex) {
+        console.log('[Transkrypcja] fallback regex, ' + viaRegex.length + ' tur');
+      } else {
+        console.warn('[Transkrypcja] nie udało się sparsować — pierwsze 200 znaków:', trimmed.slice(0, 200));
+      }
+      return viaRegex;
+    }
+
+    if (raw && typeof raw === 'object') {
+      const arr = extractTurnsArray(raw);
+      return arr ? mapTurns(arr) : null;
+    }
+    return null;
+  }
+
+  function extractTurnsArray(parsed) {
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.transcript))   return parsed.transcript;
+    if (parsed && Array.isArray(parsed.messages))     return parsed.messages;
+    if (parsed && Array.isArray(parsed.turns))        return parsed.turns;
+    if (parsed && Array.isArray(parsed.conversation)) return parsed.conversation;
+    return null;
+  }
+
+  function mapTurns(arr) {
+    const turns = arr.map(t => {
+      const role = String(t.role || t.speaker || t.author || '').trim();
+      const rawMsg = t.message ?? t.text ?? t.content ?? '';
+      const message = cleanMessage(rawMsg);
+      const time = typeof t.time_in_call_secs === 'number' ? t.time_in_call_secs : null;
+      const toolCalls   = Array.isArray(t.tool_calls)   ? t.tool_calls   : [];
+      const toolResults = Array.isArray(t.tool_results) ? t.tool_results : [];
+
+      if (!message && (toolCalls.length || toolResults.length)) {
+        const names = [...toolCalls, ...toolResults].map(x => x.tool_name).filter(Boolean);
+        const errs  = toolResults.filter(x => x.is_error).map(x => x.raw_error_message).filter(Boolean);
+        const parts = [];
+        if (names.length) parts.push('Wywołanie narzędzia: ' + [...new Set(names)].join(', '));
+        if (errs.length)  parts.push('błąd — ' + errs.join('; '));
+        return { role, message: parts.join(' · '), time, isTool: true };
+      }
+      return { role, message, time, isTool: false };
+    }).filter(t => t.message);
+    return turns.length ? turns : null;
+  }
+
+  // Regex fallback — przechodzi po surowym tekście i wyłuska "role" + "message"
+  // nawet gdy JSON jest niepoprawny (np. niezescape'owane znaki kontrolne).
+  function extractTurnsViaRegex(text) {
+    const turns = [];
+    const re = /"role"\s*:\s*"([^"]+)"[\s\S]*?"message"\s*:\s*(?:null|"((?:[^"\\]|\\.)*)")[\s\S]*?"time_in_call_secs"\s*:\s*(\d+)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const role = m[1];
+      const rawMsg = m[2];
+      const time = parseInt(m[3], 10);
+      if (!rawMsg) continue;
+      const message = cleanMessage(unescapeJsonString(rawMsg));
+      if (message) turns.push({ role, message, time, isTool: false });
+    }
+    return turns.length ? turns : null;
+  }
+
+  function unescapeJsonString(s) {
+    return s
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\"/g, '"')
+      .replace(/\\\//g, '/')
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\\\/g, '\\');
+  }
+
+  function closeTranscript() {
+    document.getElementById('transcriptModal').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  function closeTranscriptOnBackdrop(e) {
+    if (e.target.id === 'transcriptModal') closeTranscript();
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeTranscript();
+  });
+
+  function szansaBadge(val) {
+    const v = parseInt(val);
+    let color = '#1a7abf';
+    if (v >= 70) color = '#1a9a4a';
+    else if (v >= 40) color = '#d4820a';
+    else color = '#c0392b';
+    return `<span style="background:${color};color:#fff;font-weight:700;font-size:0.82rem;padding:3px 10px;border-radius:20px;">${v}%</span>`;
+  }
+
+  // =====================================================
+  // INIT
+  // =====================================================
+  loadMaterials();
+  loadContacts();
+</script>
+
+</body>
+</html>
