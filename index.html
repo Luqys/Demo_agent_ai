@@ -1311,7 +1311,7 @@
         Wiadomość została wysłana i zapisana w Airtable.
       </div>
       <div class="error-msg" id="errorMsg">
-        Błąd wysyłania. Sprawdź konfigurację Airtable w <code>config.js</code>.
+        Błąd wysyłania. Otwórz konsolę (<code>F12</code>) po szczegóły.
       </div>
     </div>
   </div>
@@ -1692,8 +1692,11 @@
           Telefon:  fullPhone,
           Data:     new Date().toISOString(),
         }
-      }]
+      }],
+      typecast: true,
     };
+
+    const errBox = document.getElementById('errorMsg');
 
     if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
       // Demo: symuluj sukces
@@ -1721,13 +1724,42 @@
         document.getElementById('successMsg').style.display = 'block';
         document.getElementById('contactForm').reset();
       } else {
-        document.getElementById('errorMsg').style.display = 'block';
+        const raw = await res.text();
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { parsed = null; }
+        const at = parsed && parsed.error;
+        console.error('[Airtable] POST error', { status: res.status, body: parsed || raw });
+
+        const reason = explainAirtableError(res.status, at);
+        errBox.innerHTML = reason;
+        errBox.style.display = 'block';
       }
-    } catch {
-      document.getElementById('errorMsg').style.display = 'block';
+    } catch (err) {
+      console.error('[Airtable] POST exception', err);
+      errBox.innerHTML = `Błąd sieci: <code>${escapeHtml(err.message || String(err))}</code>. Sprawdź połączenie internetowe.`;
+      errBox.style.display = 'block';
     }
     btn.textContent = 'Wyślij wiadomość';
     btn.disabled = false;
+  }
+
+  function explainAirtableError(status, atError) {
+    const type = atError && atError.type || '';
+    const message = atError && atError.message || '';
+
+    if (status === 401 || status === 403 || /AUTHENTICATION|NOT_AUTHORIZED|INVALID_PERMISSIONS/i.test(type)) {
+      return `Brak uprawnień do zapisu. Personal Access Token nie ma scope <code>data.records:write</code> dla tej bazy. Wejdź na <a href="https://airtable.com/create/tokens" target="_blank" rel="noopener">airtable.com/create/tokens</a>, edytuj token i dodaj scope zapisu.`;
+    }
+    if (status === 404 || /NOT_FOUND|TABLE_NOT_FOUND/i.test(type)) {
+      return `Tabela nie istnieje lub token nie ma do niej dostępu. Sprawdź <code>AIRTABLE_BASE_ID</code> i <code>TABLE_CONTACTS</code> w pliku.`;
+    }
+    if (/UNKNOWN_FIELD_NAME/i.test(type)) {
+      return `Airtable nie rozpoznaje jednego z pól (Imię / Nazwisko / Email / Telefon / Data). Sprawdź, czy nazwy w bazie dokładnie się zgadzają. Szczegóły w konsoli (<code>F12</code>).`;
+    }
+    if (/INVALID_VALUE_FOR_COLUMN|INVALID_REQUEST_BODY/i.test(type)) {
+      return `Pole ma nieprawidłowy typ. Detal: <code>${escapeHtml(message)}</code>`;
+    }
+    return `Błąd ${status}: <code>${escapeHtml(message || type || 'nieznany')}</code>. Szczegóły w konsoli (<code>F12</code>).`;
   }
 
   // =====================================================
